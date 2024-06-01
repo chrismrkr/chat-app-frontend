@@ -1,4 +1,11 @@
 .App {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: antiquewhite;
+}
+/*.App {
   text-align: center;
 }
 
@@ -36,3 +43,4 @@
     transform: rotate(360deg);
   }
 }
+*/
