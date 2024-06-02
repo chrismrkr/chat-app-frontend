@@ -10,7 +10,8 @@ const ChatRoom = (props) => {
     const member = location.state;
 
     useEffect(() => {
-        fetch('http://localhost:8080/chatroom', {
+        // http://localhost:8080/chatroom
+        fetch('/api/chatroom', {
             method: 'GET',
         })
         .then(response => response.json())
@@ -20,19 +21,6 @@ const ChatRoom = (props) => {
         .catch(error => {
             alert("채팅방 목록 조회 실패");
         })
-        // setRoomList([
-        //         {roomId: 1, roomName: "아무나 ㄱㄱ", memberId: 1},
-        //         {roomId: 2, roomName: "나도 ㄱㄱ", memberId: 2},
-        //         {roomId: 3, roomName: "밤새 대화 ㄱㄱ", memberId: 3},
-        //         {roomId: 4, roomName: "건전한 대화 추구", memberId: 4},
-        //         {roomId: 5, roomName: "감귤 10키로 팝니다", memberId: 5},
-        //         {roomId: 5, roomName: "크아", memberId: 5},
-        //         {roomId: 5, roomName: "room5", memberId: 5},
-        //         {roomId: 5, roomName: "room5", memberId: 5},
-        //         {roomId: 5, roomName: "room5", memberId: 5},
-        //         {roomId: 5, roomName: "room5", memberId: 5},
-        //     ]
-        // )
     }, []);
 
     const enterChatRoom = (roomId) => {
@@ -47,7 +35,8 @@ const ChatRoom = (props) => {
             alert("INVALID ACCESS");
             return;
         }
-        fetch("http://localhost:8080/chatroom/create", {
+        // http://localhost:8080/chatroom/create
+        fetch("/api/chatroom/create", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

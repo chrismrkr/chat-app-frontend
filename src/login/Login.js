@@ -10,17 +10,18 @@ const Login = () => {
     }
     const startLogin = (event) => {
         event.preventDefault();
-        fetch(`http://localhost:8080/member/${username}`, {
+        // http://localhost:8080/member/${username}
+        fetch(`/api/member/${username}`, {
             method: 'POST',
         })
         .then(response => {
             return response.json();
         })
-        .then((response) => {
-            navigate("/chatroom", {state: {...response}});
+        .then((res) => {
+            navigate("/chatroom", {state: res});
         })
         .catch((error) => {
-            alert("현재 입장할 수 없습니다.")
+            alert("현재 채팅방에 입장할 수 없습니다.")
         });
     }
 

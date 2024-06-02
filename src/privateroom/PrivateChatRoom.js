@@ -12,7 +12,8 @@ const PrivateChatRoom = () => {
     const client = useRef({});
     const connect = () => {
         client.current = new Client({
-            brokerURL: 'ws://localhost:8080/ws',
+            // ws://localhost:8080/ws
+            brokerURL: 'ws://chat-app-backend:8080/ws',
             onConnect: () => {
                 console.log("connected!");
                 client.current.subscribe(`/chatroom/${roomId}`, (msg) => {
