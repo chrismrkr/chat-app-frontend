@@ -10,7 +10,7 @@ const Login = () => {
     }
     const startLogin = (event) => {
         event.preventDefault();
-        // http://localhost:8080/member/${username}
+        // fetch(`http://localhost:8080/member/${username}`, { // local
         fetch(`/api/member/${username}`, {
             method: 'POST',
         })

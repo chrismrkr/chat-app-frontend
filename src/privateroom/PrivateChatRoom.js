@@ -12,11 +12,12 @@ const PrivateChatRoom = () => {
     const client = useRef({});
     const connect = () => {
         client.current = new Client({
-            // ws://localhost:8080/ws
+            // brokerURL: 'ws://localhost:8080/ws', // local
             brokerURL: 'ws://localhost:80/ws',
             onConnect: () => {
                 console.log("connected!");
-                client.current.subscribe(`/chatroom/${roomId}`, (msg) => {
+                client.current.subscribe(`/exchange/chat.exchange/roomId.${roomId}`, (msg) => {
+                // client.current.subscribe(`/chatroom/${roomId}`, (msg) => {
                     const resBody = JSON.parse(msg.body);
                     console.log(msg.body)
                     setMessages((prevMessages) => [...prevMessages, resBody]);
@@ -36,7 +37,7 @@ const PrivateChatRoom = () => {
         event.preventDefault();
         if(!client.current.connected) return;
         client.current.publish({
-            destination: `/chatroom/${roomId}`,
+            destination: `/app/message/${roomId}`,
             body: JSON.stringify({
                 senderName: member.memberName,
                 message: message

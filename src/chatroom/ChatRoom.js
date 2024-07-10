@@ -10,7 +10,7 @@ const ChatRoom = (props) => {
     const member = location.state;
 
     useEffect(() => {
-        // http://localhost:8080/chatroom
+        // fetch('http://localhost:8080/chatroom', { // local
         fetch('/api/chatroom', {
             method: 'GET',
         })
@@ -35,7 +35,7 @@ const ChatRoom = (props) => {
             alert("INVALID ACCESS");
             return;
         }
-        // http://localhost:8080/chatroom/create
+        // fetch("http://localhost:8080/chatroom/create", { // local
         fetch("/api/chatroom/create", {
             method: 'POST',
             headers: {
