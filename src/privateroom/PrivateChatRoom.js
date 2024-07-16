@@ -36,7 +36,7 @@ const PrivateChatRoom = () => {
         client.current.onWebSocketClose = (event) => { // websocket 연결 해제 콜백
             setIsConnected(false);
             console.log(`WEBSOCKET EVENT: CLOSE ${event.code} ${event.reason}`);
-            if(tryReconnect) {
+            if(tryReconnect && !isConnected) {
                 setTimeout(() => {
                     connect();
                 }, 3000);
