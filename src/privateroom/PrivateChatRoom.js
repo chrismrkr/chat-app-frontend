@@ -9,6 +9,7 @@ const PrivateChatRoom = () => {
     const {roomId} = useParams();
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
+    const [messageSeq, setMessageSeq] = useState(0);
 
     const clientRef = useRef(null);
     const connect = () => {
@@ -20,16 +21,21 @@ const PrivateChatRoom = () => {
         const client = new Client({
             // brokerURL: 'ws://localhost:8080/ws', // local
             brokerURL: 'ws://localhost:80/ws', 
+            connectHeaders: {
+
+            },
             heartbeatIncoming: 20000, // server -> client heartbeat 20s
             heartbeatOutgoing: 20000, // client -> server heartbeat 20s
             reconnectDelay: 5000,
         });
         client.onConnect = () => { // websocket 연결 성공 콜백
             console.log(`WEBSOCKET EVENT: CONNECT ${client.connected}`);
+            setMessageSeq(0);
             client.subscribe(`/exchange/chat.exchange/roomId.${roomId}`, (msg) => {
             // client.current.subscribe(`/chatroom/${roomId}`, (msg) => {
                 const resBody = JSON.parse(msg.body);
                 setMessages((prevMessages) => [...prevMessages, resBody]);
+                setMessageSeq(seq => seq+1);
             });
             client.subscribe(`/internal/healthcheck`, (msg) => {
                 const resBody = JSON.parse(msg.body);
@@ -61,10 +67,12 @@ const PrivateChatRoom = () => {
         clientRef.current.publish({
             destination: `/app/message/${roomId}`,
             body: JSON.stringify({
+                seq: messageSeq,
                 senderName: member.memberName,
                 message: message
             })
         });
+        console.log(`MessageSeq: ${messageSeq}`);
         setMessage('');
     };
     const handleMessageChange = (event) => {
