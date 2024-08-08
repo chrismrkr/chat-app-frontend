@@ -36,7 +36,8 @@ const PrivateChatRoom = () => {
                 const resBody = JSON.parse(msg.body);
                 setMessages((prevMessages) => [...prevMessages, resBody]);
                 setMessageSeq(seq => seq+1);
-            });
+                msg.ack();
+            }, {ack: 'client'});
             client.subscribe(`/internal/healthcheck`, (msg) => {
                 const resBody = JSON.parse(msg.body);
                 console.log(Date.now() + resBody.message);
