@@ -9,65 +9,71 @@ const PrivateChatRoom = () => {
     const {roomId} = useParams();
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
+    const [messageSeq, setMessageSeq] = useState(0);
 
-    const client = useRef({});
-    const [isConnected, setIsConnected] = useState(false);
-    const [tryReconnect, setTryReconnect] = useState(true);
+    const clientRef = useRef(null);
     const connect = () => {
-        if(isConnected) {
+        if(clientRef.current && clientRef.current.connected) {
+            console.log("WEBSOCKET EVENT: ALREADY CONNECTED")
             return;
         }
         console.log(`WEBSOCKET EVENT: OPEN`)
-        client.current = new Client({
+        const client = new Client({
             // brokerURL: 'ws://localhost:8080/ws', // local
-            brokerURL: 'ws://localhost:80/ws',
+            brokerURL: 'ws://localhost:80/ws', 
+            connectHeaders: {
+
+            },
             heartbeatIncoming: 20000, // server -> client heartbeat 20s
             heartbeatOutgoing: 20000, // client -> server heartbeat 20s
+            reconnectDelay: 5000,
         });
-        client.current.onConnect = () => { // websocket 연결 성공 콜백
-            setIsConnected(true);
-            client.current.subscribe(`/exchange/chat.exchange/roomId.${roomId}`, (msg) => {
+        client.onConnect = () => { // websocket 연결 성공 콜백
+            console.log(`WEBSOCKET EVENT: CONNECT ${client.connected}`);
+            setMessageSeq(0);
+            client.subscribe(`/exchange/chat.exchange/roomId.${roomId}`, (msg) => {
             // client.current.subscribe(`/chatroom/${roomId}`, (msg) => {
                 const resBody = JSON.parse(msg.body);
                 setMessages((prevMessages) => [...prevMessages, resBody]);
-            })
-            console.log("WEBSOCKET EVENT: CONNECT")
+                setMessageSeq(seq => seq+1);
+                msg.ack();
+            }, {ack: 'client'});
+            client.subscribe(`/internal/healthcheck`, (msg) => {
+                const resBody = JSON.parse(msg.body);
+                console.log(Date.now() + resBody.message);
+            });
         };
-        client.current.onWebSocketClose = (event) => { // websocket 연결 해제 콜백
-            setIsConnected(false);
+        client.onWebSocketClose = (event) => { // websocket 연결 종료 콜백
             console.log(`WEBSOCKET EVENT: CLOSE ${event.code} ${event.reason}`);
-            if(tryReconnect && !isConnected) {
-                setTimeout(() => {
-                    connect();
-                }, 3000);
-            }
         };
-        client.current.activate();
+        
+        client.activate();
+        clientRef.current = client;
     };
 
     const disconnect = () => {
-        console.log(`WEBSOCKET EVENT: DISCONNECT`)
-        setTryReconnect(false);
-        client.current.deactivate(() => {
-            setIsConnected(false);
+        clientRef.current.deactivate(() => {
+            console.log(`WEBSOCKET EVENT: DISCONNECT`)
         });
     }
 
     useEffect(() => {
         connect();
         return () => disconnect();
-    }, []);
+    }, [roomId]);
 
     const publishMessage = (event) => {
         event.preventDefault();
-        if(!client.current.connected) return;
-        client.current.publish({
+        if(!clientRef.current.connected) return;
+        clientRef.current.publish({
             destination: `/app/message/${roomId}`,
             body: JSON.stringify({
+                seq: messageSeq,
                 senderName: member.memberName,
                 message: message
             })
         });
+        console.log(`MessageSeq: ${messageSeq}`);
         setMessage('');
     };
     const handleMessageChange = (event) => {
