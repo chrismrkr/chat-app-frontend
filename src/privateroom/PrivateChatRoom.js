@@ -19,8 +19,8 @@ const PrivateChatRoom = () => {
         }
         console.log(`WEBSOCKET EVENT: OPEN`)
         const client = new Client({
-            // brokerURL: 'ws://localhost:8080/ws', // local
-            brokerURL: 'ws://localhost:80/ws', 
+            brokerURL: 'ws://localhost:8080/ws', // local
+            // brokerURL: 'ws://localhost:80/ws', 
             connectHeaders: {
 
             },

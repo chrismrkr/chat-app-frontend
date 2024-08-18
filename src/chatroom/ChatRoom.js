@@ -4,14 +4,15 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 const ChatRoom = (props) => {
     const [roomList, setRoomList] = useState([]);
+    const [myRoomList, setMyRoomList] = useState([]);
     const [newChatRoomName, setNewChatRoomName] = useState('');
     const navigate = useNavigate();
     const location = useLocation();
     const member = location.state;
 
     useEffect(() => {
-        // fetch('http://localhost:8080/chatroom', { // local
-        fetch('/api/chatroom', {
+        fetch('http://localhost:8080/chatroom', { // local
+        // fetch('/api/chatroom', {
             method: 'GET',
         })
         .then(response => response.json())
@@ -20,7 +21,19 @@ const ChatRoom = (props) => {
         })
         .catch(error => {
             alert("채팅방 목록 조회 실패");
+        });
+
+        fetch(`http://localhost:8080/chatroom/${member.memberId}`, {
+        // fetch(`/api/chatroom/${member.mebmerId}`, {
+            method: 'GET',
         })
+        .then(response => response.json())
+        .then(data => {
+            setMyRoomList(data.chatRoomList);
+        })
+        .catch(error => {
+            alert("채팅방 목록 조회 실패");
+        });
     }, []);
 
     const enterChatRoom = (roomId) => {
@@ -35,8 +48,8 @@ const ChatRoom = (props) => {
             alert("INVALID ACCESS");
             return;
         }
-        // fetch("http://localhost:8080/chatroom/create", { // local
-        fetch("/api/chatroom/create", {
+        fetch("http://localhost:8080/chatroom/create", { // local
+        // fetch("/api/chatroom/create", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -73,6 +86,10 @@ const ChatRoom = (props) => {
                         <button className={styles.button} onClick={(e) => enterChatRoom(chatRoom.roomId)}>입장하기</button>
                     </div>
                 ))}
+            </div>
+
+            <div className={styles.body}>
+
             </div>
 
             <div className={styles.tail}>
