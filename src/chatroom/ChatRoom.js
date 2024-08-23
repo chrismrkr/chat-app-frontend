@@ -17,13 +17,13 @@ const ChatRoom = (props) => {
         })
         .then(response => response.json())
         .then(data => {
-            setRoomList(data.chatRoomList);
+            setRoomList(data.chatRoomList.filter(e => e.));
         })
         .catch(error => {
-            alert("채팅방 목록 조회 실패");
+            alert("전체 채팅방 목록 조회 실패");
         });
 
-        fetch(`http://localhost:8080/chatroom/${member.memberId}`, {
+        fetch(`http://localhost:8080/chatroom/${member.memberId}`, { // local
         // fetch(`/api/chatroom/${member.mebmerId}`, {
             method: 'GET',
         })
@@ -32,17 +32,21 @@ const ChatRoom = (props) => {
             setMyRoomList(data.chatRoomList);
         })
         .catch(error => {
-            alert("채팅방 목록 조회 실패");
+            alert("내가 참여 중인 채팅방 목록 조회 실패");
         });
     }, []);
 
-    const enterChatRoom = (roomId) => {
-        navigate(`/chatroom/${roomId}`, {state: member});
-    }
-    const handleNewChatRoom = (event) => {
+    const handleNewChatRoomName = (event) => {
         setNewChatRoomName(event.target.value);
     };
+
+    const navigateToChatRoom = (roomId) => {
+        // 채팅방 페이지로 이동
+        navigate(`/chatroom/${roomId}`, {state: member});
+    };
+
     const createNewChatRoom = (event) => {
+        // 새로운 채팅방 생성 및 입장
         event.preventDefault();
         if(member == null || member.memberId == null) {
             alert("INVALID ACCESS");
@@ -63,12 +67,50 @@ const ChatRoom = (props) => {
             return response.json();
         })
         .then(data => {
-            enterChatRoom(data.roomId);
+            navigateToChatRoom(data.roomId);
         })
         .catch(error => {
             alert("채팅방을 생성할 수 없습니다.");
         })
     };
+    const enterNewChatrooms = (event, roomId) => {
+        // 일반 채팅방 입장
+        event.preventDefault();
+        if(member == null || member.memberId == null) {
+            alert("INVALID ACCESS");
+            return;
+        }
+        fetch("http://localhost:8080/chatroom/enter", { // local
+            // fetch("/api/chatroom/enter", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    memberId: member.memberId,
+                    roomId: roomId
+                })
+        })
+        .then(response => {
+            return response.json();
+        })
+        .then(data => {
+            navigateToChatRoom(data.roomId);
+        })
+        .catch(error => {
+            alert("채팅방에 입장할 수 없습니다.");
+        });
+    };
+    const enterMyChatrooms = (event, roomId) => {
+        // 내가 참여 중인 채팅방 입장
+        event.preventDefault();
+        if(member == null || member.memberId == null) {
+            alert("INVALID ACCESS");
+            return;
+        }
+        navigateToChatRoom(roomId);
+    };
+
     return (
         <div className={styles.container}>
             <div className={styles.header}>
@@ -77,13 +119,14 @@ const ChatRoom = (props) => {
                 </div>
             </div>
 
-            <div className={styles.body}>
+            <div className={styles.body}> 
                 {roomList.map(chatRoom => (
+                    // 새로운 채팅방 목록
                     <div className={styles.room} key={chatRoom.roomId}>
                         <div className={styles.roomName}>
                             {chatRoom.roomName}
                         </div>
-                        <button className={styles.button} onClick={(e) => enterChatRoom(chatRoom.roomId)}>입장하기</button>
+                        <button className={styles.button} onClick={(e) => enterNewChatrooms(e, chatRoom.roomId)}>입장하기</button>
                     </div>
                 ))}
             </div>
@@ -99,9 +142,8 @@ const ChatRoom = (props) => {
                 <div>
                     Chat Room
                 </div>
-                <input onChange={handleNewChatRoom}/>
+                <input onChange={handleNewChatRoomName}/>
                 <button onClick={createNewChatRoom}>생성하기</button>
-
             </div>
             
         </div>
