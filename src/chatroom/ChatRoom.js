@@ -11,20 +11,20 @@ const ChatRoom = (props) => {
     const member = location.state;
 
     useEffect(() => {
-        fetch('http://localhost:8080/chatroom', { // local
-        // fetch('/api/chatroom', {
+        // fetch('http://localhost:8080/chatroom', { // local
+        fetch('/api/chatroom', {
             method: 'GET',
         })
         .then(response => response.json())
         .then(data => {
-            setRoomList(data.chatRoomList.filter(e => e.));
+            setRoomList(data.chatRoomList);
         })
         .catch(error => {
             alert("전체 채팅방 목록 조회 실패");
         });
 
-        fetch(`http://localhost:8080/chatroom/${member.memberId}`, { // local
-        // fetch(`/api/chatroom/${member.mebmerId}`, {
+        // fetch(`http://localhost:8080/chatroom/${member.memberId}`, { // local
+        fetch(`/api/chatroom/${member.memberId}`, {
             method: 'GET',
         })
         .then(response => response.json())
@@ -52,8 +52,8 @@ const ChatRoom = (props) => {
             alert("INVALID ACCESS");
             return;
         }
-        fetch("http://localhost:8080/chatroom/create", { // local
-        // fetch("/api/chatroom/create", {
+        // fetch("http://localhost:8080/chatroom/create", { // local
+        fetch("/api/chatroom/create", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -80,8 +80,8 @@ const ChatRoom = (props) => {
             alert("INVALID ACCESS");
             return;
         }
-        fetch("http://localhost:8080/chatroom/enter", { // local
-            // fetch("/api/chatroom/enter", {
+        // fetch("http://localhost:8080/chatroom/enter", { // local
+            fetch("/api/chatroom/enter", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -95,7 +95,7 @@ const ChatRoom = (props) => {
             return response.json();
         })
         .then(data => {
-            navigateToChatRoom(data.roomId);
+            navigateToChatRoom(roomId);
         })
         .catch(error => {
             alert("채팅방에 입장할 수 없습니다.");
@@ -110,6 +110,35 @@ const ChatRoom = (props) => {
         }
         navigateToChatRoom(roomId);
     };
+    const exitMyChatrooms = (event, roomId) => {
+        event.preventDefault();
+        if(member == null || member.memberId == null) {
+            alert("INVALID ACCESS");
+            return;
+        }
+
+        // fetch("http://localhost:8080/chatroom/exit", { // local
+            fetch("/api/chatroom/exit", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    memberId: member.memberId,
+                    roomId: roomId
+                })
+        })
+        .then(response => {
+            return response.json();
+        })
+        .then(data => {
+            alert("채팅방에서 퇴장하였습니다.");
+            window.location.reload()
+        })
+        .catch(error => {
+            alert("채팅방 퇴장에 실패했습니다.");
+        });
+    }
 
     return (
         <div className={styles.container}>
@@ -132,7 +161,16 @@ const ChatRoom = (props) => {
             </div>
 
             <div className={styles.body}>
-
+            {myRoomList.map(chatRoom => (
+                    // 새로운 채팅방 목록
+                    <div className={styles.room} key={chatRoom.roomId}>
+                        <div className={styles.roomName}>
+                            {chatRoom.roomName}
+                        </div>
+                        <button className={styles.button} onClick={(e) => enterMyChatrooms(e, chatRoom.roomId)}>입장하기</button>
+                        <button className={styles.button} onClick={(e) => exitMyChatrooms(e, chatRoom.roomId)}>퇴장하기</button>
+                    </div>
+                ))}
             </div>
 
             <div className={styles.tail}>

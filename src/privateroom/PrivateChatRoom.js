@@ -9,9 +9,26 @@ const PrivateChatRoom = () => {
     const {roomId} = useParams();
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
-    const [messageSeq, setMessageSeq] = useState(0);
 
     const clientRef = useRef(null);
+
+    useEffect(() => {
+        // fetch(`http://localhost:8080/chatroom/history/${roomId}/${member.memberId}`, { // local
+        fetch(`/api/chatroom/history/${roomId}/${member.memberId}`, {
+            method: 'GET',
+        })
+        .then(response => response.json())
+        .then(data => {
+            const histories = data.chatHistories || [];
+            histories.forEach(element => {
+                setMessages((prevMessages) => [...prevMessages, element]);        
+            });
+            console.log("");
+        }).catch(e => {
+            alert("Error");
+        })
+    }, []);
+
     const connect = () => {
         if(clientRef.current && clientRef.current.connected) {
             console.log("WEBSOCKET EVENT: ALREADY CONNECTED")
@@ -19,8 +36,8 @@ const PrivateChatRoom = () => {
         }
         console.log(`WEBSOCKET EVENT: OPEN`)
         const client = new Client({
-            brokerURL: 'ws://localhost:8080/ws', // local
-            // brokerURL: 'ws://localhost:80/ws', 
+            // brokerURL: 'ws://localhost:8080/ws', // local
+            brokerURL: 'ws://localhost:80/ws', 
             connectHeaders: {
 
             },
@@ -30,12 +47,10 @@ const PrivateChatRoom = () => {
         });
         client.onConnect = () => { // websocket 연결 성공 콜백
             console.log(`WEBSOCKET EVENT: CONNECT ${client.connected}`);
-            setMessageSeq(0);
             client.subscribe(`/exchange/chat.exchange/roomId.${roomId}`, (msg) => {
             // client.current.subscribe(`/chatroom/${roomId}`, (msg) => {
                 const resBody = JSON.parse(msg.body);
                 setMessages((prevMessages) => [...prevMessages, resBody]);
-                setMessageSeq(seq => seq+1);
                 msg.ack();
             }, {ack: 'client'});
             client.subscribe(`/internal/healthcheck`, (msg) => {
@@ -68,12 +83,10 @@ const PrivateChatRoom = () => {
         clientRef.current.publish({
             destination: `/app/message/${roomId}`,
             body: JSON.stringify({
-                seq: messageSeq,
                 senderName: member.memberName,
                 message: message
             })
         });
-        console.log(`MessageSeq: ${messageSeq}`);
         setMessage('');
     };
     const handleMessageChange = (event) => {
