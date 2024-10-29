@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import styles from './PrivateChatRoom.module.css';
 import { Client } from "@stomp/stompjs";
+import axios from "axios";
 
 const PrivateChatRoom = () => {
     const location = useLocation();
@@ -9,6 +10,11 @@ const PrivateChatRoom = () => {
     const {roomId} = useParams();
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
+    const [currentSeq, setCurrentSeq] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const chatMessageContainerRef = useRef(null);
+    const prevScrollHeightRef = useRef(0);
+    const delayScroll = useRef(false);
 
     const clientRef = useRef(null);
 
@@ -20,7 +26,10 @@ const PrivateChatRoom = () => {
         .then(response => response.json())
         .then(data => {
             const histories = data.chatHistories || [];
-            histories.forEach(element => {
+            histories.forEach((element, idx) => {
+                if(idx == 0) {
+                    setCurrentSeq(element.seq);
+                }
                 setMessages((prevMessages) => [...prevMessages, element]);        
             });
             console.log("");
@@ -36,8 +45,8 @@ const PrivateChatRoom = () => {
         }
         console.log(`WEBSOCKET EVENT: OPEN`)
         const client = new Client({
-            // brokerURL: 'ws://localhost:8080/ws', // local
-            brokerURL: 'ws://localhost:80/ws', 
+            brokerURL: 'ws://localhost:8080/ws', // local
+            // brokerURL: 'ws://localhost:80/ws', 
             connectHeaders: {
 
             },
@@ -93,6 +102,45 @@ const PrivateChatRoom = () => {
         setMessage(event.target.value);
     };
 
+    const getPrevMessage = async (fetchId, size) => {
+        // fetch(`http://localhost:8080/chatroom/history/${roomId}/${member.memberId}?seq=${fetchId}&size=${size}`, { // local
+        fetch(`/api/chatroom/history/${roomId}/${member.memberId}?seq=${fetchId}&size=${size}`, {
+            method: 'GET',
+        })        
+        .then(response => response.json())
+        .then(data => {
+            const histories = data.chatHistories || [];
+            if(histories.length > 0) {
+                setMessages((prevMessages) => [...histories, ...prevMessages]);   
+                setCurrentSeq(histories[0].seq);
+            } else {
+                setHasMore(false);
+                console.log("no more exist!");
+            }
+            delayScroll.current = true;
+            setTimeout(() => {
+                delayScroll.current = false;
+            }, 500);
+        }).catch(e => {
+            alert("Error");
+        })
+    };
+
+    const handleScroll = () => {
+        const container = chatMessageContainerRef.current;
+        if (container.scrollTop === 0 && hasMore && !delayScroll.current) {
+            prevScrollHeightRef.current = container.scrollHeight; // 스크롤 높이 저장
+            getPrevMessage(currentSeq, 100); // 가장 오래된 ID 기준으로 이전 메시지 불러오기
+        }
+    };
+
+    useEffect(() => {
+        const container = chatMessageContainerRef.current;
+        if(prevScrollHeightRef.current) {
+            container.scrollTop = container.scrollHeight - prevScrollHeightRef.current;
+        }
+    }, [messages]);
+
     return (
         <div className={styles.container}>
             <div className={styles.header}>
@@ -101,7 +149,11 @@ const PrivateChatRoom = () => {
                 </div>
                 
             </div>
-            <div className={styles.body}>
+            <div
+                ref={chatMessageContainerRef}
+                onScroll={handleScroll} 
+                className={styles.body}
+            >
                 {messages.map((msg, idx) => (
                     <div key={idx} className={styles.message}>
                         <div className={styles.sender}>
